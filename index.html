@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Laundry Optimizer – PWA ultra simple</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <style>
+    :root { --bg:#0b1220; --card:#0f172a; --ink:#e2e8f0; --muted:#94a3b8; --acc:#38bdf8; --ok:#22c55e; --bad:#ef4444; --chip:#1e293b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; color: var(--ink); background: radial-gradient(1200px 800px at 20% -10%, #0b2440 0%, var(--bg) 55%), var(--bg); }
+    header { padding: 20px 16px 0; text-align: center; }
+    h1 { margin: 0; font-size: 22px; letter-spacing:.2px; }
+    .wrap { max-width: 980px; margin: 16px auto 40px; padding: 0 16px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:16px; box-shadow: 0 10px 30px rgba(2,6,23,.35) inset, 0 30px 60px rgba(2,6,23,.35); }
+    .row { display: grid; gap: 12px; }
+    @media (min-width: 900px) { .row-2 { grid-template-columns: 1fr 1fr; } }
+    .section { padding:16px; }
+    .controls { display:grid; gap:10px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .controls label { font-size: 13px; color: var(--muted); display:block; margin-bottom:6px; }
+    .controls input[type="number"], .controls select, .controls input[type="text"]{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04); color: var(--ink);
+    }
+    .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      color:var(--ink); padding:10px 14px; border-radius:12px; cursor:pointer; user-select:none; }
+    .btn:hover{ border-color: rgba(255,255,255,.25); }
+    .btn.primary{ background: linear-gradient(180deg, rgba(56,189,248,.35), rgba(56,189,248,.2)); border-color: rgba(56,189,248,.5); }
+    .btn.ghost{ background: transparent; }
+    .hint{ font-size:12px; color:var(--muted); }
+    .items { width:100%; border-collapse: collapse; }
+    .items th, .items td { padding:10px; border-bottom: 1px solid rgba(255,255,255,.06); text-align:left; font-size:14px; }
+    .items thead th { position: sticky; top: 0; background: rgba(2,6,23,.7); backdrop-filter: blur(6px); }
+    .chip { display:inline-block; background: var(--chip); padding:4px 8px; border-radius:999px; font-size:12px; color:var(--ink); border:1px solid rgba(255,255,255,.08); }
+    .grid { display:grid; gap:12px; }
+    .loads { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); padding: 0 0 12px; }
+    .load { padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); }
+    .tag { font-size:12px; color: var(--muted); }
+    .warn { color: #fecaca; }
+    .ok { color: #bbf7d0; }
+    footer { text-align:center; padding: 16px; color: var(--muted); font-size: 12px; }
+    .right { text-align:right; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🫧 Laundry Optimizer</h1>
+  <p class="hint">Coche tes items, choisis leur couleur, ajoute “Délicat” si besoin → clique “Optimiser”.</p>
+</header>
+
+<div class="wrap">
+  <div class="row row-2">
+    <section class="card section">
+      <div class="controls">
+        <div>
+          <label>Capacité machine (nombre d’articles)</label>
+          <input id="capacity" type="number" min="1" value="8" />
+        </div>
+        <div>
+          <label>Température par défaut (°C)</label>
+          <select id="defaultTemp">
+            <option value="20">20</option>
+            <option value="30" selected>30</option>
+            <option value="40">40</option>
+            <option value="60">60</option>
+            <option value="95">95</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px" class="toolbar">
+        <button class="btn ghost" id="addRow">+ Ajouter une ligne</button>
+        <button class="btn ghost" id="quickWhitelist">+ T-shirt blanc</button>
+        <button class="btn ghost" id="quickDarkJean">+ Jean foncé</button>
+        <button class="btn ghost" id="quickTowel">+ Serviette (60°C)</button>
+      </div>
+      <div class="hint" style="margin-top:8px">
+        Astuce : évite de mélanger <b>Vives</b> avec <b>Blancs</b>. Les <b>Délicats</b> passent à part, essorage réduit.
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="toolbar" style="justify-content:space-between; margin-bottom:8px;">
+        <div class="hint">Items sélectionnés → optimisés en lots ci-dessous.</div>
+        <div>
+          <button class="btn" id="clearUnchecked">Purger lignes décochées</button>
+          <button class="btn" id="resetAll">Réinitialiser</button>
+        </div>
+      </div>
+      <div class="grid">
+        <table class="items" id="itemsTable" aria-label="Table des vêtements">
+          <thead>
+            <tr>
+              <th>✅</th>
+              <th>Type</th>
+              <th>Couleur (bucket)</th>
+              <th>Délicat</th>
+              <th>Temp (°C)</th>
+              <th class="right">Poids</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            <!-- Lignes dynamiques -->
+          </tbody>
+        </table>
+        <div class="toolbar">
+          <button class="btn primary" id="optimize">⚙️ Optimiser</button>
+          <button class="btn" id="exportPlan">Exporter le plan (.json)</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card section" style="margin-top:12px;">
+    <h3 style="margin:0 0 8px;">Plan d’optimisation</h3>
+    <div id="loadsBox" class="loads"></div>
+    <div id="advice" class="hint" style="margin-top:8px;"></div>
+  </section>
+
+  <section class="card section" style="margin-top:12px;">
+    <details>
+      <summary><b>Rappels couleur (buckets)</b></summary>
+      <p class="hint" style="margin-top:8px">
+        <span class="chip">Blancs</span> (t-shirts/draps blancs), <span class="chip">Clairs</span> (beige, gris clair, pastel),
+        <span class="chip">Vives</span> (rouge/rose/orange/vert vif/bleu roi), <span class="chip">Foncés</span> (marine, anthracite),
+        <span class="chip">Noirs</span>. <b>Délicats</b> = laine/soie/sport (filet + essorage faible). Température = la plus basse du lot.
+      </p>
+    </details>
+  </section>
+</div>
+
+<footer>© Laundry Optimizer – mini PWA locale (offline). Aucune donnée envoyée.</footer>
+
+<script>
+/* ---------- Minimal PWA bootstrapping (single-file) ---------- */
+(function setupPWA(){
+  // Create manifest on-the-fly
+  const manifest = {
+    name: "Laundry Optimizer",
+    short_name: "Laundry",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#0b1220",
+    theme_color: "#0ea5e9",
+    icons: [
+      { src: "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="20" fill="#0ea5e9"/><path d="M20 30h56v36a10 10 0 0 1-10 10H30a10 10 0 0 1-10-10V30z" fill="#0b1220"/><circle cx="48" cy="48" r="18" fill="#38bdf8"/></svg>'), sizes:"96x96", type:"image/svg+xml" }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:"application/manifest+json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("link");
+  link.rel = "manifest";
+  link.href = url;
+  document.head.appendChild(link);
+
+  // In-memory service worker (offline cache of this page)
+  const swCode = `
+    const CACHE='laundry-opt-v1';
+    self.addEventListener('install', e=>{
+      e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e=> self.clients.claim());
+    self.addEventListener('fetch', e=>{
+      e.respondWith(
+        caches.match(e.request).then(res=> res || fetch(e.request).then(net=>{
+          const copy = net.clone();
+          caches.open(CACHE).then(c=> c.put(e.request, copy)).catch(()=>{});
+          return net;
+        }).catch(()=>res))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:'text/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(swUrl).catch(()=>{});
+  }
+})();
+
+/* ---------- App logic ---------- */
+const TYPES = ["T-shirt","Chemise","Jean","Pull","Sous-vêtement","Serviette","Drap"];
+const BUCKETS = ["Blancs","Clairs","Vives","Foncés","Noirs"];
+
+const $ = sel => document.querySelector(sel);
+const itemsBody = $("#itemsBody");
+const capacityInput = $("#capacity");
+const defaultTemp = $("#defaultTemp");
+const loadsBox = $("#loadsBox");
+const adviceBox = $("#advice");
+
+function makeSelect(options, value){
+  const s = document.createElement('select');
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt; o.textContent = opt;
+    if (opt === value) o.selected = true;
+    s.appendChild(o);
+  }
+  s.className = 'sel';
+  s.style.cssText = "padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#e2e8f0;";
+  return s;
+}
+
+function addRow(pref){
+  const tr = document.createElement('tr');
+
+  // ✅
+  const td0 = document.createElement('td');
+  const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = pref?.checked ?? true;
+  td0.appendChild(cb);
+
+  // Type
+  const td1 = document.createElement('td');
+  const typeSel = makeSelect(TYPES, pref?.type ?? "T-shirt");
+  typeSel.style.minWidth = "110px";
+  td1.appendChild(typeSel);
+
+  // Color bucket
+  const td2 = document.createElement('td');
+  const colSel = makeSelect(BUCKETS, pref?.bucket ?? "Clairs");
+  td2.appendChild(colSel);
+
+  // Délicat
+  const td3 = document.createElement('td');
+  const del = document.createElement('input'); del.type='checkbox'; del.checked = !!pref?.delicate;
+  td3.appendChild(del);
+
+  // Temp
+  const td4 = document.createElement('td');
+  const temp = document.createElement('select');
+  [20,30,40,60,95].forEach(v=>{
+    const o=document.createElement('option'); o.value=v; o.textContent=v;
+    if (v === (pref?.temp ?? Number(defaultTemp.value))) o.selected=true;
+    temp.appendChild(o);
+  });
+  temp.style.cssText = "padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#e2e8f0;";
+  td4.appendChild(temp);
+
+  // Poids (1 = 1 article)
+  const td5 = document.createElement('td');
+  td5.className = 'right';
+  const w = document.createElement('input'); w.type='number'; w.min='0.5'; w.step='0.5'; w.value = pref?.weight ?? 1;
+  w.style.cssText = "width:80px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#e2e8f0; text-align:right;";
+  td5.appendChild(w);
+
+  tr.append(td0, td1, td2, td3, td4, td5);
+  itemsBody.appendChild(tr);
+}
+
+function seed(){
+  if (itemsBody.children.length) return;
+  addRow({type:"T-shirt", bucket:"Blancs"});
+  addRow({type:"Jean", bucket:"Foncés"});
+  addRow({type:"Pull", bucket:"Clairs", delicate:true, temp:30});
+  addRow({type:"Serviette", bucket:"Blancs", temp:60});
+}
+seed();
+
+$("#addRow").addEventListener('click', ()=> addRow());
+$("#quickWhitelist").addEventListener('click', ()=> addRow({type:"T-shirt", bucket:"Blancs"}));
+$("#quickDarkJean").addEventListener('click', ()=> addRow({type:"Jean", bucket:"Foncés"}));
+$("#quickTowel").addEventListener('click', ()=> addRow({type:"Serviette", bucket:"Blancs", temp:60, weight:1.5}));
+
+$("#clearUnchecked").addEventListener('click', ()=>{
+  [...itemsBody.querySelectorAll('tr')].forEach(tr=>{
+    const checked = tr.querySelector('input[type=checkbox]').checked;
+    if (!checked) tr.remove();
+  });
+});
+
+$("#resetAll").addEventListener('click', ()=>{
+  itemsBody.innerHTML = "";
+  seed();
+  loadsBox.innerHTML = "";
+  adviceBox.textContent = "";
+});
+
+function readRows(){
+  const rows = [];
+  itemsBody.querySelectorAll('tr').forEach(tr=>{
+    const checked = tr.querySelector('td:nth-child(1) input').checked;
+    if (!checked) return;
+    const type = tr.querySelector('td:nth-child(2) select').value;
+    const bucket = tr.querySelector('td:nth-child(3) select').value;
+    const delicate = tr.querySelector('td:nth-child(4) input').checked;
+    const temp = Number(tr.querySelector('td:nth-child(5) select').value);
+    const weight = Number(tr.querySelector('td:nth-child(6) input').value);
+    rows.push({type, bucket, delicate, temp, weight});
+  });
+  return rows;
+}
+
+function groupKey(it){ return `${it.bucket}|${it.delicate?'delicate':'normal'}`; }
+
+function optimize(){
+  const items = readRows();
+  const cap = Math.max(1, Number(capacityInput.value) || 8);
+
+  // Group by bucket + delicate
+  const groups = {};
+  for (const it of items) {
+    const k = groupKey(it);
+    if (!groups[k]) groups[k] = { items: [], minTemp: it.temp, bucket: it.bucket, delicate: it.delicate };
+    groups[k].items.push(it);
+    groups[k].minTemp = Math.min(groups[k].minTemp, it.temp);
+  }
+
+  // Build loads per group trying to minimize number (ceil(totalWeight / cap))
+  const loads = [];
+  Object.values(groups).forEach(g=>{
+    const total = g.items.reduce((s,i)=> s + (i.weight||1), 0);
+    const n = Math.max(1, Math.ceil(total / cap));
+
+    // Simple greedy pack by weight
+    const bins = Array.from({length:n}, ()=> ({items:[], weight:0}));
+    // Sort heavier first to balance a bit
+    g.items.sort((a,b)=> (b.weight||1) - (a.weight||1));
+    for (const it of g.items){
+      bins.sort((a,b)=> a.weight - b.weight);
+      bins[0].items.push(it);
+      bins[0].weight += (it.weight||1);
+    }
+    for (let i=0;i<bins.length;i++){
+      loads.push({
+        name: `${g.bucket}${g.delicate?' · Délicat':''}`,
+        temp: g.minTemp,
+        delicate: g.delicate,
+        items: bins[i].items,
+        weight: Number(bins[i].weight.toFixed(1))
+      });
+    }
+  });
+
+  // Render
+  loadsBox.innerHTML = "";
+  let warnings = [];
+  if (!items.length) {
+    adviceBox.innerHTML = "Aucun item sélectionné.";
+    return;
+  }
+
+  // High-level soft rules to highlight
+  const hasWhites = items.some(i=> i.bucket==="Blancs");
+  const hasVivid = items.some(i=> i.bucket==="Vives");
+  const hasTowels = items.some(i=> i.type.toLowerCase().includes("serviette"));
+  const hasDelicates = items.some(i=> i.delicate);
+  if (hasWhites && hasVivid) warnings.push("⚠️ Évite de mélanger Blancs et Vives (risque de transfert).");
+  if (hasTowels) warnings.push("ℹ️ Les serviettes peuvent pelucher : idéalement séparées.");
+  if (hasDelicates) warnings.push("ℹ️ Délicats : essorage réduit, lessive douce, filet si possible.");
+
+  const frag = document.createDocumentFragment();
+  loads.sort((a,b)=> (a.delicate===b.delicate? 0 : a.delicate? -1:1) || a.temp-b.temp || a.name.localeCompare(b.name));
+  loads.forEach((L, idx)=>{
+    const el = document.createElement('div');
+    el.className = 'load';
+    const tag = L.delicate ? 'Délicat' : 'Standard';
+    const program = `${L.name} — ${L.temp}°C — ${tag}`;
+    const count = L.items.length;
+    const list = L.items.map(i=> `${i.type} (${i.bucket}${i.delicate?', délicat':''}, ${i.temp}°C)`).join(', ');
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+        <div><b>Lot ${idx+1}</b> · <span class="chip">${program}</span></div>
+        <div class="tag">${count} article(s) · ~${L.weight} u</div>
+      </div>
+      <div class="hint" style="margin-top:6px">${list || '<i>—</i>'}</div>
+    `;
+    frag.appendChild(el);
+  });
+  loadsBox.appendChild(frag);
+
+  const totalLoads = loads.length;
+  adviceBox.innerHTML = `<span class="ok">✅ ${totalLoads} battée(s) au total</span> · Capacité ${Number(capacityInput.value)} u.`
+    + (warnings.length? `<br><span class="warn">${warnings.join(" ")}</span>` : "");
+}
+
+$("#optimize").addEventListener('click', optimize);
+
+$("#exportPlan").addEventListener('click', ()=>{
+  const cap = Math.max(1, Number(capacityInput.value) || 8);
+  const data = {
+    capacity: cap,
+    defaults: { temp: Number(defaultTemp.value) },
+    items: readRows()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'laundry_plan.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Persist simple prefs
+["capacity","defaultTemp"].forEach(id=>{
+  const el = document.getElementById(id);
+  const key = "lo:"+id;
+  const val = localStorage.getItem(key);
+  if (val!==null) el.value = val;
+  el.addEventListener('change', ()=> localStorage.setItem(key, el.value));
+});
+</script>
+</body>
+</html>
