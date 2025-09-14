@@ -1,242 +1,180 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Laundry – Formulaire simple</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Laundry Mini – Optimiseur ultra simple</title>
 <style>
-  :root { --ink:#0f172a; --mut:#475569; --bd:#e2e8f0; --bg:#ffffff; --chip:#f1f5f9; }
-  *{box-sizing:border-box} body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; color:var(--ink); background:var(--bg)}
-  header{padding:16px 12px;border-bottom:1px solid var(--bd)} h1{margin:0;font-size:18px}
-  .wrap{max-width:820px;margin:0 auto;padding:16px 12px}
-  fieldset{border:1px solid var(--bd);border-radius:12px;padding:12px;margin:0 0 14px}
-  legend{padding:0 6px;color:var(--mut);font-size:12px}
-  .grid{display:grid;gap:8px}
-  .grid-2{grid-template-columns:1fr 1fr}
-  .row{display:flex;gap:8px;align-items:center}
-  label{font-size:14px}
-  input[type=number], input[type=range]{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px}
-  .help{font-size:12px;color:var(--mut)}
-  .chip{display:inline-block;background:var(--chip);border:1px solid var(--bd);padding:2px 8px;border-radius:999px;font-size:12px;margin-left:6px}
-  button{padding:10px 14px;border:1px solid var(--bd);border-radius:10px;background:#0ea5e9;color:white;cursor:pointer}
-  button.secondary{background:#fff;color:#0f172a}
-  table{width:100%;border-collapse:collapse;margin-top:10px}
-  th,td{border-bottom:1px solid var(--bd);padding:8px;text-align:left;font-size:14px}
+  :root{--bg:#0b1220;--card:#0f172a;--ink:#e6edf5;--mut:#9aa6b2;--bd:#1f2937;--accent:#38bdf8;--chip:#111827}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1220,#0b1220 60%,#0a1627);color:var(--ink)}
+  header{padding:18px 14px;border-bottom:1px solid var(--bd);text-align:center}
+  h1{margin:0;font-size:18px;letter-spacing:.2px}
+  .wrap{max-width:760px;margin:0 auto;padding:16px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .mut{color:var(--mut);font-size:12px}
+  .control{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:var(--chip)}
+  .control input{width:70px;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--ink);text-align:right}
+  .chip{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px}
+  .name{min-width:160px}
+  .desc{color:var(--mut);font-size:12px}
+  .count{min-width:32px;text-align:center}
+  .btn{border:1px solid rgba(255,255,255,.18);background:rgba(56,189,248,.15);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer}
+  .btn.ghost{background:transparent}
+  .btn.round{width:30px;height:30px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
+  .grid{display:grid;gap:10px}
+  .loads{display:grid;gap:12px;margin-top:8px}
+  .load{padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.08)}
+  .load .hdr{display:flex;justify-content:space-between;gap:10px}
+  .ok{color:#bbf7d0}.warn{color:#fecaca}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 6px;text-align:left;font-size:14px}
   .right{text-align:right}
-  .warn{color:#b91c1c}
 </style>
 </head>
 <body>
-<header><h1>🧺 Optimisateur de battées — Formulaire</h1></header>
+<header><h1>🧺 Laundry Mini — Moins de battées, point.</h1></header>
+
 <div class="wrap">
-
-  <fieldset>
-    <legend>Paramètres</legend>
-    <div class="grid grid-2">
-      <label>Capacité machine (articles)
-        <input id="capacity" type="number" min="1" value="8">
-      </label>
-      <label>Part de délicats (%, estimée)
-        <input id="delicatePct" type="range" min="0" max="60" value="20" oninput="delicatePctOut.textContent=this.value+'%'">
-        <div class="help">Estimation globale de pièces délicates (laine, soie, sport). <span id="delicatePctOut">20%</span></div>
-      </label>
-    </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Quantités par couleur</legend>
-    <div class="help" style="margin-bottom:6px">
-      Saisis le nombre approximatif d’articles pour chaque famille de couleur.
-    </div>
-    <div class="grid">
-      <div class="row">
-        <label style="min-width:220px">Blancs <span class="chip">t-shirts/draps blancs</span></label>
-        <input type="number" min="0" value="2" data-color="Blancs">
+  <!-- Q1: capacité -->
+  <section class="card" style="margin-bottom:12px">
+    <div class="row">
+      <div class="control">
+        <span>Capacité/battée</span>
+        <input id="capacity" type="number" min="1" value="8" />
+        <span class="mut">articles</span>
       </div>
-      <div class="row">
-        <label style="min-width:220px">Pastels / Clairs <span class="chip">beige, gris clair, pastel</span></label>
-        <input type="number" min="0" value="3" data-color="Clairs">
-      </div>
-      <div class="row">
-        <label style="min-width:220px">Couleurs moyennes <span class="chip">bleu/vert classique</span></label>
-        <input type="number" min="0" value="2" data-color="Couleurs">
-      </div>
-      <div class="row">
-        <label style="min-width:220px">Vives / Rouges <span class="chip">rouge, fuchsia, orange vif</span></label>
-        <input type="number" min="0" value="2" data-color="Vives">
-      </div>
-      <div class="row">
-        <label style="min-width:220px">Foncés / Noirs <span class="chip">marine, anthracite, noir</span></label>
-        <input type="number" min="0" value="3" data-color="Foncés">
-      </div>
-      <div class="row">
-        <label style="min-width:220px">Denim <span class="chip">jeans (attention neuf)</span></label>
-        <input type="number" min="0" value="1" data-color="Denim">
-      </div>
-    </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Types particuliers (facultatif)</legend>
-    <div class="grid grid-2">
-      <label>Serviettes / Draps (chaud 60 °C)
-        <input id="hotQty" type="number" min="0" value="0">
-        <div class="help">Compter à part (peluche, besoin de chaud).</div>
-      </label>
-      <label>Jeans neufs ?
-        <input id="newJeans" type="checkbox">
-        <div class="help">Si coché : séparer des clairs/pastels.</div>
+      <label class="control" title="Sépare le denim s'il est neuf">
+        <input id="newJeans" type="checkbox" />
+        <span>Jeans neufs ?</span>
       </label>
     </div>
-  </fieldset>
+    <div class="mut" style="margin-top:6px">Astuce : la plupart des vêtements supportent 30 °C. Les serviettes/draps se lavent plutôt à 60 °C.</div>
+  </section>
 
-  <div class="row" style="justify-content:flex-start;gap:10px;margin:10px 0">
-    <button id="compute">Optimiser</button>
-    <button class="secondary" id="reset">Réinitialiser</button>
-  </div>
+  <!-- Q2: ajoute les quantités avec + / − -->
+  <section class="card">
+    <div class="mut" style="margin-bottom:8px">Ajoute tes pièces (tapote + / −). On fusionne automatiquement ce qui peut l’être.</div>
+    <div id="chips" class="grid"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="optimize" class="btn">⚙️ Optimiser</button>
+      <button id="reset" class="btn ghost">Réinitialiser</button>
+    </div>
+  </section>
 
-  <div id="output"></div>
+  <!-- Résultat -->
+  <section class="card" style="margin-top:12px">
+    <div id="result"></div>
+  </section>
 </div>
 
 <script>
-const COLORS = [
-  {key:"Blancs",   temp:40, cycle:"Coton/Blancs 40 °C", note:"Éviter avec Vives. Ajoute oxy-blanc si besoin."},
-  {key:"Clairs",   temp:30, cycle:"Couleurs 30 °C",    note:"Pastels et beiges."},
-  {key:"Couleurs", temp:30, cycle:"Couleurs 30 °C",    note:"Bleu/vert moyens."},
-  {key:"Vives",    temp:30, cycle:"Couleurs 30 °C",    note:"Rouges/rose/orange vif : risquent de déteindre."},
-  {key:"Foncés",   temp:30, cycle:"Couleurs Foncées 30 °C", note:"Marine/noir, retourner les vêtements."},
-  {key:"Denim",    temp:30, cycle:"Jeans 30 °C",       note:"Laver sur l’envers. Jeans neufs à part."}
+/* --- Modèle ultra-condensé --- */
+const CATS = [
+  { key:"blancs",   name:"Blancs",       desc:"t-shirts/draps blancs",            cycle:"Coton 40 °C",      temp:40, group:"whites" },
+  { key:"clairs",   name:"Clairs",       desc:"beige, gris clair, pastels",      cycle:"Couleurs 30 °C",   temp:30, group:"lights" },
+  { key:"couleurs", name:"Couleurs",     desc:"bleu/vert moyens",                 cycle:"Couleurs 30 °C",   temp:30, group:"lights" },
+  { key:"vives",    name:"Vives/Rouges", desc:"rouge, fuchsia, orange vif",       cycle:"Couleurs 30 °C",   temp:30, group:"vivid"  },
+  { key:"fonces",   name:"Foncés/Noirs", desc:"marine, anthracite, noir",         cycle:"Foncées 30 °C",    temp:30, group:"darks"  },
+  { key:"denim",    name:"Denim",        desc:"jeans (à l’envers)",               cycle:"Jeans 30 °C",      temp:30, group:"darks"  },
+  { key:"delicats", name:"Délicats",     desc:"laine/soie/sport",                 cycle:"Délicat 20–30 °C", temp:30, group:"delicate" },
+  { key:"chaud",    name:"Serviettes/Draps", desc:"linge de maison",              cycle:"Coton 60 °C",      temp:60, group:"hot" }
 ];
-const DELICATE = { temp:30, cycle:"Délicat 20–30 °C", note:"Essorage réduit, lessive douce, filet si possible." };
-const HOT = { temp:60, cycle:"Coton 60 °C", note:"Serviettes/draps/torchons (hygiène, peluches)." };
 
-const byKey = Object.fromEntries(COLORS.map(c=>[c.key,c]));
-const $ = (sel, el=document)=> el.querySelector(sel);
+const state = Object.fromEntries(CATS.map(c=>[c.key,0]));
+const $ = s => document.querySelector(s);
 
-$("#reset").addEventListener("click", ()=>{
-  location.reload();
-});
+function renderChips(){
+  const box = $("#chips");
+  box.innerHTML = "";
+  CATS.forEach(c=>{
+    const el = document.createElement("div");
+    el.className = "chip";
+    el.innerHTML = `
+      <div class="name"><b>${c.name}</b><div class="desc">${c.desc}</div></div>
+      <button class="btn round" data-k="${c.key}" data-delta="-1">−</button>
+      <div class="count" id="count-${c.key}">${state[c.key]}</div>
+      <button class="btn round" data-k="${c.key}" data-delta="1">+</button>
+    `;
+    box.appendChild(el);
+  });
+  box.addEventListener("click", e=>{
+    const btn = e.target.closest("button[data-k]");
+    if (!btn) return;
+    const k = btn.getAttribute("data-k");
+    const d = Number(btn.getAttribute("data-delta"));
+    state[k] = Math.max(0, (state[k]||0) + d);
+    $("#count-"+k).textContent = state[k];
+  }, { once:false });
+}
 
-$("#compute").addEventListener("click", ()=>{
-  const capacity = Math.max(1, Number($("#capacity").value||8));
-  const delicatePct = Math.min(60, Math.max(0, Number($("#delicatePct").value||0))) / 100;
-  const hotQty = Math.max(0, Number($("#hotQty").value||0));
+function optimize(){
+  const cap = Math.max(1, Number($("#capacity").value||8));
   const newJeans = $("#newJeans").checked;
 
-  // Lire quantités par couleur
-  const inputs = document.querySelectorAll("input[data-color]");
-  const colorQty = {};
-  let total = 0;
-  inputs.forEach(inp=>{
-    const k = inp.getAttribute("data-color");
-    const n = Math.max(0, Number(inp.value||0));
-    colorQty[k] = n;
-    total += n;
-  });
+  // 1) Règles de fusion pour minimiser
+  const whites   = state.blancs;
+  const lights   = state.clairs + state.couleurs;            // fusion
+  const vivid    = state.vives;                              // isolé (risque de transfert)
+  const darks    = state.fonces + (newJeans ? 0 : state.denim); // denim fusionné si pas neuf
+  const denimNew = newJeans ? state.denim : 0;               // jeans neufs à part
+  const delicate = state.delicats;                           // mélangés entre eux
+  const hot      = state.chaud;
 
-  // Allouer une partie en "délicat" (proportionnelle à chaque couleur)
-  const delicateLoads = [];  // {color,key,qty}
-  const normalLoads   = [];  // {color,key,qty}
-  for (const [k, n] of Object.entries(colorQty)) {
-    if (n === 0) continue;
-    const d = Math.round(n * delicatePct);
-    const norm = n - d;
-    if (d > 0) delicateLoads.push({key:k, qty:d});
-    if (norm > 0) {
-      // Jeans neufs : isoler dans Denim (normalLoads déjà par couleur)
-      normalLoads.push({key:k, qty:norm});
+  const groups = [
+    {label:"Délicats",     qty:delicate, cycle:"Délicat 20–30 °C", temp:30, note:"Essorage doux, filet recommandé."},
+    {label:"Blancs",       qty:whites,   cycle:"Coton 40 °C",      temp:40, note:"Évite tout mélange avec Vives."},
+    {label:"Clairs/Couleurs", qty:lights, cycle:"Couleurs 30 °C", temp:30, note:"Pastels et couleurs moyennes compatibles."},
+    {label:"Vives/Rouges", qty:vivid,    cycle:"Couleurs 30 °C",   temp:30, note:"Peuvent déteindre, surtout neuves."},
+    {label:"Foncés/Noirs", qty:darks,    cycle:"Foncées 30 °C",    temp:30, note:"Retourner les vêtements."},
+    {label:"Jeans neufs",  qty:denimNew, cycle:"Jeans 30 °C",      temp:30, note:"Séparer les 1–2 premiers lavages."},
+    {label:"Serviettes/Draps", qty:hot,  cycle:"Coton 60 °C",      temp:60, note:"Linge de maison, peluches possibles."}
+  ].filter(g=>g.qty>0);
+
+  // 2) Éclater en battées par capacité (ceil)
+  const loads = [];
+  groups.forEach(g=>{
+    const n = Math.ceil(g.qty / cap);
+    for (let i=0;i<n;i++){
+      loads.push({
+        name: g.label,
+        temp: g.temp,
+        cycle: g.cycle,
+        count: (i===n-1)? (g.qty - cap*i) : cap,
+        note: g.note
+      });
     }
-  }
-
-  // Ajouter le lot "chaud" pour serviettes/draps
-  const hotLoads = hotQty>0 ? [{key:"Serviettes/Draps", qty:hotQty}] : [];
-
-  // Fonction pour éclater en battées selon capacité
-  function splitLoads(arr, capacity) {
-    const out = [];
-    arr.forEach(({key, qty})=>{
-      const nLoads = Math.ceil(qty / capacity);
-      for (let i=0;i<nLoads;i++){
-        const count = (i === nLoads-1) ? (qty - capacity*i) : capacity;
-        out.push({key, count});
-      }
-    });
-    return out;
-  }
-
-  // Construire les battées
-  // 1) Délicats (par couleur, même si petite quantité, pour éviter transferts)
-  const loadsDelicate = splitLoads(delicateLoads, capacity).map(L=>({
-    name: `${L.key} · Délicat`,
-    count: L.count,
-    temp: DELICATE.temp,
-    cycle: DELICATE.cycle,
-    note: DELICATE.note
-  }));
-
-  // 2) Chaud (serviettes/draps)
-  const loadsHot = splitLoads(hotLoads, capacity).map(L=>({
-    name: `${L.key}`,
-    count: L.count,
-    temp: HOT.temp,
-    cycle: HOT.cycle,
-    note: HOT.note
-  }));
-
-  // 3) Normaux par couleur (Blancs, Clairs, Couleurs, Vives, Foncés, Denim)
-  const loadsNormal = splitLoads(normalLoads, capacity).map(L=>{
-    const meta = byKey[L.key] || {temp:30, cycle:"Couleurs 30 °C", note:""};
-    return {
-      name: `${L.key}`,
-      count: L.count,
-      temp: meta.temp,
-      cycle: meta.cycle,
-      note: meta.note + (L.key==="Denim" && newJeans ? " Séparer les jeans NEUFS la première fois." : "")
-    };
   });
 
-  // Fusionner l’ordre conseillé : Délicats → Normal par temp croissant → Chaud
-  const allLoads = [...loadsDelicate, ...loadsNormal.sort((a,b)=>a.temp-b.temp), ...loadsHot];
+  // 3) Tri affichage : Délicats → temp croissant → Serviettes en dernier
+  loads.sort((a,b)=> (a.name.includes("Délicat")?-1:0) - (b.name.includes("Délicat")?-1:0) || a.temp-b.temp || a.name.localeCompare(b.name));
+  const totalLoads = loads.length;
 
-  // Résumé + avertissements
-  const warnings = [];
-  if ((colorQty["Blancs"]||0) > 0 && ((colorQty["Vives"]||0) > 0)) {
-    warnings.push("Évite de mélanger Blancs et Vives (risque de transfert).");
-  }
-  if ((colorQty["Denim"]||0) > 0 && newJeans) {
-    warnings.push("Jeans neufs : laver séparément (ils déteignent).");
-  }
+  // 4) Rendu
+  const warn = [];
+  if (state.blancs>0 && state.vives>0) warn.push("Évite de mélanger Blancs et Vives.");
+  if (newJeans && state.denim>0) warn.push("Jeans neufs séparés (risque de décoloration).");
 
-  // Rendu
-  const out = $("#output");
-  out.innerHTML = renderLoads(allLoads, capacity, warnings);
-});
+  $("#result").innerHTML = renderSummary(totalLoads, cap, loads, warn);
+}
 
-function renderLoads(loads, capacity, warnings){
-  if (!loads.length) return `<p class="help">Renseigne au moins une quantité pour calculer.</p>`;
-  let html = `
-    <h3>Plan minimal : ${loads.length} battée(s)</h3>
-    <div class="help">Capacité choisie : ${capacity} article(s) par battée.</div>
-    <table>
-      <thead><tr><th>#</th><th>Lot</th><th>Cycle recommandé</th><th>Temp.</th><th class="right">Qté</th></tr></thead>
-      <tbody>
-  `;
-  loads.forEach((L, i)=>{
-    html += `<tr>
-      <td>${i+1}</td>
-      <td>${L.name}</td>
-      <td>${L.cycle}</td>
-      <td>${L.temp} °C</td>
-      <td class="right">${L.count}</td>
-    </tr>
-    <tr><td></td><td colspan="4" class="help">${L.note||"&nbsp;"}</td></tr>`;
+function renderSummary(total, cap, loads, warnings){
+  if (!loads.length) return `<p class="mut">Ajoute au moins 1 pièce puis clique <b>Optimiser</b>.</p>`;
+  let html = `<div class="ok"><b>${total} battée(s)</b> · Capacité ${cap} article(s)</div>`;
+  html += `<table><thead><tr><th>#</th><th>Lot</th><th>Cycle</th><th>Temp.</th><th class="right">Qté</th></tr></thead><tbody>`;
+  loads.forEach((L,i)=>{
+    html += `<tr><td>${i+1}</td><td>${L.name}</td><td>${L.cycle}</td><td>${L.temp} °C</td><td class="right">${L.count}</td></tr>
+             <tr><td></td><td colspan="4" class="mut">${L.note}</td></tr>`;
   });
   html += `</tbody></table>`;
-  if (warnings.length){
-    html += `<p class="warn"><b>Attention :</b> ${warnings.join(" ")}</p>`;
-  }
+  if (warnings.length) html += `<p class="warn"><b>Attention :</b> ${warnings.join(" ")}</p>`;
   return html;
 }
+
+/* --- Init --- */
+renderChips();
+$("#optimize").addEventListener("click", optimize);
+$("#reset").addEventListener("click", ()=> location.reload());
 </script>
 </body>
 </html>
